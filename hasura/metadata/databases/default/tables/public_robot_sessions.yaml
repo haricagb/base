@@ -1,0 +1,104 @@
+table:
+  name: robot_sessions
+  schema: public
+
+object_relationships:
+  - name: robot
+    using:
+      foreign_key_constraint_on: robot_id
+  - name: resident
+    using:
+      foreign_key_constraint_on: resident_id
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - robot_id
+        - resident_id
+        - session_type
+        - started_at
+        - ended_at
+        - conversation_summary_encrypted
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - robot_id
+        - resident_id
+        - session_type
+        - started_at
+        - ended_at
+        - conversation_summary_encrypted
+        - created_at
+        - updated_at
+      filter:
+        resident:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - id
+        - robot_id
+        - resident_id
+        - session_type
+        - started_at
+        - ended_at
+        - conversation_summary_encrypted
+      filter:
+        resident:
+          caregiver_assignments:
+            caregiver_id:
+              _eq: X-Hasura-User-Id
+
+  - role: robot
+    permission:
+      columns:
+        - id
+        - robot_id
+        - resident_id
+        - session_type
+        - started_at
+        - ended_at
+        - conversation_summary_encrypted
+      filter:
+        robot_id:
+          _eq: X-Hasura-Robot-Id
+
+insert_permissions:
+  - role: robot
+    permission:
+      columns:
+        - resident_id
+        - session_type
+        - started_at
+        - conversation_summary_encrypted
+      check:
+        robot_id:
+          _eq: X-Hasura-Robot-Id
+      set:
+        robot_id: X-Hasura-Robot-Id
+
+update_permissions:
+  - role: robot
+    permission:
+      columns:
+        - ended_at
+        - conversation_summary_encrypted
+      filter:
+        robot_id:
+          _eq: X-Hasura-Robot-Id
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}

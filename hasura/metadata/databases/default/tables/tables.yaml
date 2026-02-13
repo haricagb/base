@@ -1,0 +1,8 @@
+- "!include public_users.yaml"
+- "!include public_enterprises.yaml"
+- "!include public_residents.yaml"
+- "!include public_robots.yaml"
+- "!include public_caregiver_residents.yaml"
+- "!include public_stories.yaml"
+- "!include public_incidents.yaml"
+- "!include public_robot_sessions.yaml"

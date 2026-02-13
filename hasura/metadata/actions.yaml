@@ -1,0 +1,30 @@
+actions:
+  - name: login
+    definition:
+      kind: synchronous
+      handler: "{{ACTION_BASE_URL}}/api/v1/actions/login"
+      forward_client_headers: true
+    permissions:
+      - role: anonymous
+
+  - name: register
+    definition:
+      kind: synchronous
+      handler: "{{ACTION_BASE_URL}}/api/v1/actions/register"
+      forward_client_headers: true
+    permissions:
+      - role: anonymous
+
+  - name: refreshToken
+    definition:
+      kind: synchronous
+      handler: "{{ACTION_BASE_URL}}/api/v1/actions/refresh"
+      forward_client_headers: true
+    permissions:
+      - role: anonymous
+
+custom_types:
+  objects:
+    - name: AuthResponse
+    - name: UserInfo
+    - name: TokenPair

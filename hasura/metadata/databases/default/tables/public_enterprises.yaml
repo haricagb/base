@@ -1,0 +1,84 @@
+table:
+  name: enterprises
+  schema: public
+
+array_relationships:
+  - name: users
+    using:
+      foreign_key_constraint_on:
+        column: enterprise_id
+        table:
+          name: users
+          schema: public
+  - name: residents
+    using:
+      foreign_key_constraint_on:
+        column: enterprise_id
+        table:
+          name: residents
+          schema: public
+  - name: robots
+    using:
+      foreign_key_constraint_on:
+        column: enterprise_id
+        table:
+          name: robots
+          schema: public
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - name
+        - contact_email
+        - subscription_tier
+        - max_robots
+        - is_active
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - name
+        - contact_email
+        - subscription_tier
+        - max_robots
+        - is_active
+        - created_at
+        - updated_at
+      filter:
+        id:
+          _eq: X-Hasura-Enterprise-Id
+
+insert_permissions:
+  - role: mta
+    permission:
+      columns:
+        - name
+        - contact_email
+        - subscription_tier
+        - max_robots
+        - is_active
+      check: {}
+
+update_permissions:
+  - role: mta
+    permission:
+      columns:
+        - name
+        - contact_email
+        - subscription_tier
+        - max_robots
+        - is_active
+      filter: {}
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}

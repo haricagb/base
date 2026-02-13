@@ -1,0 +1,191 @@
+# =============================================================================
+# Envoy Proxy Configuration - SONA Platform
+# =============================================================================
+# Routes traffic to frontend apps (Svelte, Flutter), Hasura GraphQL, and Go API
+# based on Host header and URL path.
+#
+# Usage (dev):  envoy -c envoy.yaml
+# Usage (prod): Mount as ConfigMap in Kubernetes or pass via Docker volume.
+# =============================================================================
+
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+
+static_resources:
+
+  # ---------------------------------------------------------------------------
+  # Listeners
+  # ---------------------------------------------------------------------------
+  listeners:
+    - name: main_listener
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 80
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                codec_type: AUTO
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+
+                    # ---------------------------------------------------------
+                    # Enterprise dashboard (Svelte)
+                    # ---------------------------------------------------------
+                    - name: enterprise_app
+                      domains:
+                        - "enterprise.machanirobotics.dev"
+                        - "enterprise.machanirobotics.dev:*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: svelte_app
+                            timeout: 60s
+
+                    # ---------------------------------------------------------
+                    # Family / consumer app (Flutter Web)
+                    # ---------------------------------------------------------
+                    - name: family_app
+                      domains:
+                        - "family.machanirobotics.dev"
+                        - "family.machanirobotics.dev:*"
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: flutter_app
+                            timeout: 60s
+
+                    # ---------------------------------------------------------
+                    # Default host -- API + GraphQL catch-all
+                    # ---------------------------------------------------------
+                    - name: default
+                      domains:
+                        - "*"
+                      routes:
+                        # GraphQL endpoint -> Hasura
+                        - match:
+                            prefix: "/graphql"
+                          route:
+                            cluster: hasura
+                            timeout: 30s
+
+                        # REST API -> Go backend
+                        - match:
+                            prefix: "/api"
+                          route:
+                            cluster: go_api
+                            timeout: 30s
+
+                        # Everything else -> Hasura (console, metadata, health)
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: hasura
+                            timeout: 30s
+
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  # ---------------------------------------------------------------------------
+  # Clusters (upstreams)
+  # ---------------------------------------------------------------------------
+  clusters:
+
+    # Svelte dev server
+    - name: svelte_app
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: svelte_app
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: localhost
+                      port_value: 5173
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: "/"
+
+    # Flutter web dev server
+    - name: flutter_app
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: flutter_app
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: localhost
+                      port_value: 5174
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: "/"
+
+    # Hasura GraphQL Engine
+    - name: hasura
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: hasura
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: hasura
+                      port_value: 8080
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: "/healthz"
+
+    # Go REST API
+    - name: go_api
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: go_api
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: api
+                      port_value: 3000
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: "/api/health"

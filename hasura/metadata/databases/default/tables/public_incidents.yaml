@@ -1,0 +1,137 @@
+table:
+  name: incidents
+  schema: public
+
+object_relationships:
+  - name: resident
+    using:
+      foreign_key_constraint_on: resident_id
+  - name: reporter
+    using:
+      foreign_key_constraint_on: reporter_id
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - resident_id
+        - reporter_id
+        - severity
+        - description
+        - resolution
+        - resolved_at
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - resident_id
+        - reporter_id
+        - severity
+        - description
+        - resolution
+        - resolved_at
+        - created_at
+        - updated_at
+      filter:
+        resident:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - id
+        - resident_id
+        - reporter_id
+        - severity
+        - description
+        - resolution
+        - resolved_at
+        - created_at
+      filter:
+        resident:
+          caregiver_assignments:
+            caregiver_id:
+              _eq: X-Hasura-User-Id
+
+  - role: family
+    permission:
+      columns:
+        - id
+        - resident_id
+        - severity
+        - description
+        - created_at
+      filter:
+        reporter_id:
+          _eq: X-Hasura-User-Id
+
+insert_permissions:
+  - role: caregiver
+    permission:
+      columns:
+        - resident_id
+        - severity
+        - description
+      check:
+        resident:
+          caregiver_assignments:
+            caregiver_id:
+              _eq: X-Hasura-User-Id
+      set:
+        reporter_id: X-Hasura-User-Id
+
+  - role: family
+    permission:
+      columns:
+        - resident_id
+        - severity
+        - description
+      check: {}
+      set:
+        reporter_id: X-Hasura-User-Id
+
+update_permissions:
+  - role: mta
+    permission:
+      columns:
+        - severity
+        - description
+        - resolution
+        - resolved_at
+      filter: {}
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - resolution
+        - resolved_at
+      filter:
+        resident:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id
+      check: {}
+
+  - role: caregiver
+    permission:
+      columns:
+        - resolution
+        - resolved_at
+      filter:
+        resident:
+          caregiver_assignments:
+            caregiver_id:
+              _eq: X-Hasura-User-Id
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}

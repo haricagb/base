@@ -1,0 +1,165 @@
+table:
+  name: residents
+  schema: public
+
+object_relationships:
+  - name: enterprise
+    using:
+      foreign_key_constraint_on: enterprise_id
+
+array_relationships:
+  - name: caregiver_assignments
+    using:
+      foreign_key_constraint_on:
+        column: resident_id
+        table:
+          name: caregiver_residents
+          schema: public
+  - name: stories
+    using:
+      foreign_key_constraint_on:
+        column: resident_id
+        table:
+          name: stories
+          schema: public
+  - name: incidents
+    using:
+      foreign_key_constraint_on:
+        column: resident_id
+        table:
+          name: incidents
+          schema: public
+  - name: robot_sessions
+    using:
+      foreign_key_constraint_on:
+        column: resident_id
+        table:
+          name: robot_sessions
+          schema: public
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - enterprise_id
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - enterprise_id
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+        - created_at
+        - updated_at
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - id
+        - full_name
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+      filter:
+        caregiver_assignments:
+          caregiver_id:
+            _eq: X-Hasura-User-Id
+
+  - role: family
+    permission:
+      columns:
+        - id
+        - full_name
+        - room_number
+        - care_level
+        - is_active
+      filter:
+        stories:
+          author_id:
+            _eq: X-Hasura-User-Id
+
+insert_permissions:
+  - role: mta
+    permission:
+      columns:
+        - enterprise_id
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+      check:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      set:
+        enterprise_id: X-Hasura-Enterprise-Id
+
+update_permissions:
+  - role: mta
+    permission:
+      columns:
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+      filter: {}
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - full_name
+        - date_of_birth
+        - room_number
+        - care_level
+        - medical_notes_encrypted
+        - is_active
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}
+
+  - role: eta
+    permission:
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id

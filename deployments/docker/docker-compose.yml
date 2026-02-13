@@ -1,0 +1,102 @@
+# deployments/docker/docker-compose.yml
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: robotics-mgmt-db
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: robotics_mgmt
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d robotics_mgmt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    container_name: robotics-mgmt-api
+    ports:
+      - "3000:3000"
+    environment:
+      APP_ENV: dev
+      APP_SERVER_PORT: "3000"
+      APP_DATABASE_HOST: postgres
+      APP_DATABASE_PASSWORD: devpassword
+      APP_JWT_SECRET: dev-jwt-secret-for-docker-compose!!
+      FIREBASE_PROJECT_ID: sona-dev
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-credentials.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  hasura:
+    image: hasura/graphql-engine:v2.43.0
+    container_name: robotics-mgmt-hasura
+    ports:
+      - "8080:8080"
+    environment:
+      ## Database connection
+      HASURA_GRAPHQL_DATABASE_URL: "postgres://app_user:devpassword@postgres:5432/robotics_mgmt"
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: "postgres://app_user:devpassword@postgres:5432/robotics_mgmt"
+
+      ## Admin & auth
+      HASURA_GRAPHQL_ADMIN_SECRET: hasura-dev-admin-secret
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
+
+      ## Console & dev mode
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: "startup, http-log, webhook-log, websocket-log, query-log"
+
+      ## JWT — maps Go JWT claims to Hasura session variables (SONA roles)
+      HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"dev-jwt-secret-for-docker-compose!!","claims_map":{"x-hasura-user-id":{"path":"$$.user_id"},"x-hasura-default-role":{"path":"$$.role"},"x-hasura-allowed-roles":["mta","eta","caregiver","family","robot"],"x-hasura-enterprise-id":{"path":"$$.enterprise_id","default":""},"x-hasura-robot-id":{"path":"$$.robot_id","default":""}}}'
+
+      ## Actions handler base URL (Go API inside Docker network)
+      ACTION_BASE_URL: http://api:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    container_name: robotics-mgmt-envoy
+    ports:
+      - "80:80"
+      - "9901:9901"
+    volumes:
+      - ../envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    depends_on:
+      - hasura
+      - api
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: robotics-mgmt-otel
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+    volumes:
+      - ../otel/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  pgdata:

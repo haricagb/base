@@ -1,0 +1,30 @@
+# config/config.dev.yaml — Development overrides
+
+server:
+  port: 3000
+
+database:
+  host: "localhost"
+  password: "devpassword"
+  sslmode: "disable"
+
+log:
+  level: "debug"
+  format: "text"
+
+cors:
+  allowed_origins:
+    - "*"
+
+rate_limit:
+  requests_per_second: 1000
+  burst: 2000
+
+jwt:
+  secret: "dev-secret-not-for-production-32chars!"
+  access_token_expiry: 1h
+  refresh_token_expiry: 720h  # 30 days
+
+firebase:
+  project_id: ""
+  credentials_file: ""

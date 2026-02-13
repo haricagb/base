@@ -1,0 +1,152 @@
+table:
+  name: users
+  schema: public
+
+object_relationships:
+  - name: enterprise
+    using:
+      foreign_key_constraint_on: enterprise_id
+
+array_relationships:
+  - name: caregiver_assignments
+    using:
+      foreign_key_constraint_on:
+        column: caregiver_id
+        table:
+          name: caregiver_residents
+          schema: public
+
+# --- SONA RBAC Permissions ---
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - username
+        - email
+        - full_name
+        - role
+        - enterprise_id
+        - firebase_uid
+        - is_active
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - username
+        - email
+        - full_name
+        - role
+        - enterprise_id
+        - is_active
+        - created_at
+        - updated_at
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - id
+        - username
+        - email
+        - full_name
+        - role
+        - is_active
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+
+  - role: family
+    permission:
+      columns:
+        - id
+        - username
+        - full_name
+        - role
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+
+insert_permissions:
+  - role: mta
+    permission:
+      columns:
+        - username
+        - email
+        - full_name
+        - role
+        - enterprise_id
+        - firebase_uid
+        - is_active
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - username
+        - email
+        - full_name
+        - role
+        - is_active
+      check:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      set:
+        enterprise_id: X-Hasura-Enterprise-Id
+
+update_permissions:
+  - role: mta
+    permission:
+      columns:
+        - username
+        - email
+        - full_name
+        - role
+        - enterprise_id
+        - is_active
+      filter: {}
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - full_name
+        - role
+        - is_active
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      check:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - full_name
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+      check: {}
+
+  - role: family
+    permission:
+      columns:
+        - full_name
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}

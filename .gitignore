@@ -1,0 +1,152 @@
+# .gitignore — Go project
+
+# ==========================
+# Go
+# ==========================
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test
+*.test
+*.prof
+coverage.out
+coverage.html
+coverage.txt
+
+# Dependency
+vendor/
+
+# Build / Debug
+tmp/
+debug
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# ==========================
+# Environment & Secrets
+# ==========================
+.env
+.env.prod
+.env.local
+*.pem
+*.key
+*.crt
+*.p12
+serviceAccountKey.json
+firebase/firebase-config.json
+
+# ==========================
+# IDE & Editor
+# ==========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# ==========================
+# OS
+# ==========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================
+# Docker
+# ==========================
+docker-compose.override.yml
+
+# ==========================
+# Terraform
+# ==========================
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# ==========================
+# Hasura
+# ==========================
+hasura/.env
+
+# ==========================
+# Node (firebase functions)
+# ==========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# ==========================
+# Protobuf (generated)
+# ==========================
+*.pb.go
+
+# ==========================
+# Logs
+# ==========================
+*.log
+logs/
+
+# ==========================
+# AI Tools
+# ==========================
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Cursor
+.cursor/
+.cursorignore
+.cursorindexingignore
+.cursorules
+
+# GitHub Copilot
+.copilot/
+.github/copilot-instructions.md
+
+# ChatGPT / OpenAI
+.chatgpt/
+chatgpt-config.json
+
+# Aider
+.aider*
+.aiderignore
+
+# Codeium / Windsurf
+.codeiumrc
+.windsurf/
+.windsurfrules
+
+# General AI context files
+.prompts/
+.ai/
+
+# ==========================
+# Misc
+# ==========================
+*.bak
+*.tmp
+*.temp

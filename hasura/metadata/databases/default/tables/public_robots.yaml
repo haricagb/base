@@ -1,0 +1,126 @@
+table:
+  name: robots
+  schema: public
+
+object_relationships:
+  - name: enterprise
+    using:
+      foreign_key_constraint_on: enterprise_id
+  - name: assigned_resident
+    using:
+      foreign_key_constraint_on: assigned_resident_id
+
+array_relationships:
+  - name: sessions
+    using:
+      foreign_key_constraint_on:
+        column: robot_id
+        table:
+          name: robot_sessions
+          schema: public
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - id
+        - serial_number
+        - enterprise_id
+        - assigned_resident_id
+        - status
+        - firmware_version
+        - last_heartbeat
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+
+  - role: eta
+    permission:
+      columns:
+        - id
+        - serial_number
+        - enterprise_id
+        - assigned_resident_id
+        - status
+        - firmware_version
+        - last_heartbeat
+        - created_at
+        - updated_at
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+
+  - role: robot
+    permission:
+      columns:
+        - id
+        - serial_number
+        - assigned_resident_id
+        - status
+        - firmware_version
+      filter:
+        id:
+          _eq: X-Hasura-Robot-Id
+
+insert_permissions:
+  - role: mta
+    permission:
+      columns:
+        - serial_number
+        - enterprise_id
+        - assigned_resident_id
+        - status
+        - firmware_version
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - serial_number
+        - assigned_resident_id
+        - status
+        - firmware_version
+      check:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      set:
+        enterprise_id: X-Hasura-Enterprise-Id
+
+update_permissions:
+  - role: mta
+    permission:
+      columns:
+        - enterprise_id
+        - assigned_resident_id
+        - status
+        - firmware_version
+        - last_heartbeat
+      filter: {}
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - assigned_resident_id
+        - status
+        - firmware_version
+      filter:
+        enterprise_id:
+          _eq: X-Hasura-Enterprise-Id
+      check: {}
+
+  - role: robot
+    permission:
+      columns:
+        - status
+        - last_heartbeat
+      filter:
+        id:
+          _eq: X-Hasura-Robot-Id
+      check: {}
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}

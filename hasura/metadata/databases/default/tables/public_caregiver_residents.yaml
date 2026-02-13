@@ -1,0 +1,71 @@
+table:
+  name: caregiver_residents
+  schema: public
+
+object_relationships:
+  - name: caregiver
+    using:
+      foreign_key_constraint_on: caregiver_id
+  - name: resident
+    using:
+      foreign_key_constraint_on: resident_id
+
+select_permissions:
+  - role: mta
+    permission:
+      columns:
+        - caregiver_id
+        - resident_id
+        - assigned_at
+      filter: {}
+
+  - role: eta
+    permission:
+      columns:
+        - caregiver_id
+        - resident_id
+        - assigned_at
+      filter:
+        caregiver:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id
+
+  - role: caregiver
+    permission:
+      columns:
+        - caregiver_id
+        - resident_id
+        - assigned_at
+      filter:
+        caregiver_id:
+          _eq: X-Hasura-User-Id
+
+insert_permissions:
+  - role: mta
+    permission:
+      columns:
+        - caregiver_id
+        - resident_id
+      check: {}
+
+  - role: eta
+    permission:
+      columns:
+        - caregiver_id
+        - resident_id
+      check:
+        caregiver:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id
+
+delete_permissions:
+  - role: mta
+    permission:
+      filter: {}
+
+  - role: eta
+    permission:
+      filter:
+        caregiver:
+          enterprise_id:
+            _eq: X-Hasura-Enterprise-Id

@@ -1,0 +1,111 @@
+# =============================================================================
+# OpenTelemetry Collector Configuration - SONA Platform
+# =============================================================================
+# Receives traces and logs from application services, applies HIPAA-compliant
+# PII stripping, and exports to configured backends.
+#
+# Run with:  otelcol --config otel-collector.yaml
+# =============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+
+  # ---------------------------------------------------------------------------
+  # Memory limiter -- protects the collector from OOM under load
+  # Must be the FIRST processor in every pipeline.
+  # ---------------------------------------------------------------------------
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # ---------------------------------------------------------------------------
+  # Batch processor -- reduces export overhead by batching spans/logs
+  # ---------------------------------------------------------------------------
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # ---------------------------------------------------------------------------
+  # Attributes processor -- HIPAA compliance PII stripping
+  # Removes or redacts sensitive fields before data leaves the collector.
+  # ---------------------------------------------------------------------------
+  attributes/strip_pii:
+    actions:
+      - key: email
+        action: delete
+      - key: password
+        action: delete
+      - key: medical_notes
+        action: delete
+      - key: ssn
+        action: delete
+      - key: phone_number
+        action: delete
+      - key: user.email
+        action: delete
+      - key: user.password
+        action: delete
+      - key: user.ssn
+        action: delete
+      - key: user.phone_number
+        action: delete
+      - key: user.medical_notes
+        action: delete
+
+exporters:
+
+  # ---------------------------------------------------------------------------
+  # Logging exporter -- writes telemetry to stdout (useful for dev / debugging)
+  # ---------------------------------------------------------------------------
+  logging:
+    loglevel: info
+
+  # ---------------------------------------------------------------------------
+  # Jaeger / OTLP exporter (placeholder)
+  # Uncomment and configure the endpoint for production tracing backends
+  # such as Jaeger, Grafana Tempo, or any OTLP-compatible service.
+  # ---------------------------------------------------------------------------
+  # otlp/jaeger:
+  #   endpoint: "${JAEGER_OTLP_ENDPOINT:-jaeger:4317}"
+  #   tls:
+  #     insecure: true
+
+service:
+  pipelines:
+
+    # -------------------------------------------------------------------------
+    # Traces pipeline
+    # -------------------------------------------------------------------------
+    traces:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - attributes/strip_pii
+        - batch
+      exporters:
+        - logging
+        # - otlp/jaeger  # Uncomment when Jaeger is available
+
+    # -------------------------------------------------------------------------
+    # Logs pipeline
+    # -------------------------------------------------------------------------
+    logs:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - attributes/strip_pii
+        - batch
+      exporters:
+        - logging
+        # - otlp/jaeger  # Uncomment when Jaeger is available

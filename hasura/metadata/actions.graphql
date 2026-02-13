@@ -1,0 +1,35 @@
+type Mutation {
+  login(email: String!, password: String!): AuthResponse
+}
+
+type Mutation {
+  register(
+    username: String!
+    email: String!
+    password: String!
+    full_name: String!
+  ): AuthResponse
+}
+
+type Mutation {
+  refreshToken(refresh_token: String!): TokenPair
+}
+
+type AuthResponse {
+  user: UserInfo!
+  tokens: TokenPair!
+}
+
+type UserInfo {
+  id: Int!
+  username: String!
+  email: String!
+  full_name: String!
+  role: String!
+}
+
+type TokenPair {
+  access_token: String!
+  refresh_token: String!
+  expires_at: String!
+}
