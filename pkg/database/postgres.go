@@ -49,9 +49,12 @@ func NewPostgresPool(ctx context.Context, cfg PostgresConfig, logger *slog.Logge
 	return pool, nil
 }
 
+// healthCheckTimeout is the maximum time a health ping may take.
+const healthCheckTimeout = 5 * time.Second
+
 // HealthCheck pings the database and returns nil if healthy.
 func HealthCheck(ctx context.Context, pool *pgxpool.Pool) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, healthCheckTimeout)
 	defer cancel()
 	return pool.Ping(ctx)
 }

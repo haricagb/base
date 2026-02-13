@@ -121,13 +121,8 @@ func (r *UserPostgres) List(ctx context.Context, filter domain.UserFilter) ([]do
 		return nil, 0, domain.NewAppError(domain.ErrDatabaseOperation, err.Error())
 	}
 
-	// Pagination defaults.
-	if filter.Limit <= 0 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 100 {
-		filter.Limit = 100
-	}
+	// Ensure pagination bounds (defensive — service layer normalizes first).
+	filter.Normalize()
 
 	baseQuery += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, filter.Limit, filter.Offset)

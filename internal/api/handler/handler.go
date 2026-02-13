@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -35,8 +36,8 @@ func NewHandler(
 
 // respondError writes an error response mapped from a domain error.
 func respondError(c *gin.Context, err error) {
-	appErr, ok := err.(*domain.AppError)
-	if ok {
+	var appErr *domain.AppError
+	if errors.As(err, &appErr) {
 		status := domain.HTTPStatusFromError(appErr.Err)
 		interceptor.Fail(c, status, appErr.Message, appErr.Details)
 		return

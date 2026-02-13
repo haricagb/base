@@ -94,7 +94,7 @@ type JWTConfig struct {
 
 // Load reads configuration from YAML files and environment variables.
 // env parameter selects the overlay file: "dev", "staging", "prod".
-func Load(configPath string, env string) (*Config, error) {
+func Load(configPath, env string) (*Config, error) {
 	v := viper.New()
 
 	v.SetConfigName("config")
@@ -105,10 +105,10 @@ func Load(configPath string, env string) (*Config, error) {
 		return nil, fmt.Errorf("reading base config: %w", err)
 	}
 
-	// Environment-specific overlay (optional, merged on top of base)
+	// Environment-specific overlay (optional, merged on top of base).
 	if env != "" {
 		v.SetConfigName("config." + env)
-		_ = v.MergeInConfig()
+		_ = v.MergeInConfig() //nolint:errcheck // overlay is optional; missing file is not an error
 	}
 
 	// Environment variable overrides (prefix APP_, e.g. APP_DATABASE_PASSWORD)

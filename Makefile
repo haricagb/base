@@ -1,6 +1,6 @@
 # Makefile — Build automation for my-application
 
-.PHONY: build run test lint migrate-up migrate-down docker-up docker-down tidy clean hasura-console hasura-metadata-apply hasura-metadata-export hasura-metadata-reload
+.PHONY: build run test test-coverage lint lint-fix lint-ci check migrate-up migrate-down docker-up docker-down tidy clean hasura-console hasura-metadata-apply hasura-metadata-export hasura-metadata-reload
 
 APP_NAME := my-application
 BINARY_API := bin/api
@@ -36,6 +36,16 @@ test-coverage:
 
 lint:
 	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
+
+lint-ci:
+	golangci-lint run --out-format=github-actions ./...
+
+## Pre-push check (run all gates locally before pushing)
+
+check: lint test build
 
 ## Database
 

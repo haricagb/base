@@ -24,7 +24,7 @@ type APIResponse struct {
 // newEnvelope constructs a standard API response envelope.
 func newEnvelope(c *gin.Context, success bool, message string, data, errors interface{}) APIResponse {
 	rid, _ := c.Get(RequestIDKey)
-	requestID, _ := rid.(string)
+	requestID, _ := rid.(string) //nolint:errcheck // type assertion fallback to empty string is intended
 
 	return APIResponse{
 		Success:   success,

@@ -12,10 +12,10 @@ type contextKey string
 
 const loggerKey contextKey = "logger"
 
-// Setup initialises the global slog logger.
+// Setup initializes the global slog logger.
 // level: "debug", "info", "warn", "error"
 // format: "json" or "text"
-func Setup(level string, format string, output io.Writer) *slog.Logger {
+func Setup(level, format string, output io.Writer) *slog.Logger {
 	if output == nil {
 		output = os.Stdout
 	}

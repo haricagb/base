@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -39,7 +40,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create migrate instance: %v", err)
 	}
-	defer m.Close()
+	defer func() {
+		srcErr, dbErr := m.Close()
+		if srcErr != nil {
+			log.Printf("closing migration source: %v", srcErr)
+		}
+		if dbErr != nil {
+			log.Printf("closing migration database: %v", dbErr)
+		}
+	}()
 
 	switch *direction {
 	case "up":
@@ -58,7 +67,7 @@ func main() {
 		log.Fatalf("unknown direction: %s (use 'up' or 'down')", *direction)
 	}
 
-	if err != nil && err != migrate.ErrNoChange {
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		log.Fatalf("migration failed: %v", err)
 	}
 

@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -128,8 +129,8 @@ func (h *Handler) FirebaseLogin(c *gin.Context) {
 
 // respondAuthError maps domain errors to HTTP responses.
 func respondAuthError(c *gin.Context, err error) {
-	appErr, ok := err.(*domain.AppError)
-	if ok {
+	var appErr *domain.AppError
+	if errors.As(err, &appErr) {
 		status := domain.HTTPStatusFromError(appErr.Err)
 		interceptor.Fail(c, status, appErr.Message, appErr.Details)
 		return

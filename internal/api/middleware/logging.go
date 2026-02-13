@@ -17,7 +17,7 @@ func Logging(log *slog.Logger) gin.HandlerFunc {
 		start := time.Now()
 
 		rid, _ := c.Get(interceptor.RequestIDKey)
-		requestID, _ := rid.(string)
+		requestID, _ := rid.(string) //nolint:errcheck // type assertion fallback to empty string is intended
 
 		reqLogger := log.With(
 			slog.String("request_id", requestID),

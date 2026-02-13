@@ -11,6 +11,7 @@ import (
 // TokenType distinguishes access tokens from refresh tokens.
 type TokenType string
 
+// Token type constants.
 const (
 	AccessToken  TokenType = "access"
 	RefreshToken TokenType = "refresh"

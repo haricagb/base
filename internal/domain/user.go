@@ -3,6 +3,12 @@ package domain
 
 import "time"
 
+// Pagination defaults.
+const (
+	DefaultPageSize = 20
+	MaxPageSize     = 100
+)
+
 // User represents the core user domain entity.
 type User struct {
 	ID           int64     `json:"id"`
@@ -24,4 +30,17 @@ type UserFilter struct {
 	IsActive *bool
 	Limit    int
 	Offset   int
+}
+
+// Normalize applies pagination defaults and clamps values to safe bounds.
+func (f *UserFilter) Normalize() {
+	if f.Limit <= 0 {
+		f.Limit = DefaultPageSize
+	}
+	if f.Limit > MaxPageSize {
+		f.Limit = MaxPageSize
+	}
+	if f.Offset < 0 {
+		f.Offset = 0
+	}
 }

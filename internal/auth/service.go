@@ -77,7 +77,7 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (*AuthRespons
 	}
 
 	// 3. Verify password.
-	if err := CheckPassword(req.Password, user.PasswordHash); err != nil {
+	if pwErr := CheckPassword(req.Password, user.PasswordHash); pwErr != nil {
 		return nil, domain.NewAppError(domain.ErrUnauthorized, "invalid email or password")
 	}
 
@@ -113,8 +113,8 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*AuthR
 	}
 
 	// 3. Persist (the repository handles unique constraint violations).
-	if err := s.userRepo.Create(ctx, user); err != nil {
-		return nil, err
+	if createErr := s.userRepo.Create(ctx, user); createErr != nil {
+		return nil, createErr
 	}
 
 	// 4. Generate tokens.
@@ -218,16 +218,16 @@ func (s *authService) findOrCreateFirebaseUser(ctx context.Context, firebaseUID,
 		IsActive:    true,
 	}
 
-	if err := s.userRepo.Create(ctx, user); err != nil {
+	if createErr := s.userRepo.Create(ctx, user); createErr != nil {
 		// If username conflict, append part of firebase_uid to make it unique.
 		var appErr *domain.AppError
-		if errors.As(err, &appErr) && errors.Is(appErr.Err, domain.ErrAlreadyExists) {
+		if errors.As(createErr, &appErr) && errors.Is(appErr.Err, domain.ErrAlreadyExists) {
 			user.Username = username + "_" + firebaseUID[:8]
-			if createErr := s.userRepo.Create(ctx, user); createErr != nil {
-				return nil, createErr
+			if retryErr := s.userRepo.Create(ctx, user); retryErr != nil {
+				return nil, retryErr
 			}
 		} else {
-			return nil, err
+			return nil, createErr
 		}
 	}
 

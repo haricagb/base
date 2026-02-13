@@ -29,6 +29,12 @@ type hasuraActionPayload struct {
 	SessionVars map[string]string      `json:"session_variables"`
 }
 
+// inputString safely extracts a string value from the Hasura action input map.
+func (p *hasuraActionPayload) inputString(key string) (string, bool) {
+	v, ok := p.Input[key].(string)
+	return v, ok
+}
+
 // Login handles the Hasura "login" action.
 func (h *ActionsHandler) Login(c *gin.Context) {
 	var payload hasuraActionPayload
@@ -37,12 +43,21 @@ func (h *ActionsHandler) Login(c *gin.Context) {
 		return
 	}
 
-	req := auth.LoginRequest{
-		Email:    payload.Input["email"].(string),
-		Password: payload.Input["password"].(string),
+	email, ok := payload.inputString("email")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "email is required and must be a string"})
+		return
+	}
+	password, ok := payload.inputString("password")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "password is required and must be a string"})
+		return
 	}
 
-	resp, err := h.authService.Login(c.Request.Context(), req)
+	resp, err := h.authService.Login(c.Request.Context(), auth.LoginRequest{
+		Email:    email,
+		Password: password,
+	})
 	if err != nil {
 		h.logger.Warn("action login failed", slog.String("error", err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -60,14 +75,33 @@ func (h *ActionsHandler) Register(c *gin.Context) {
 		return
 	}
 
-	req := auth.RegisterRequest{
-		Username: payload.Input["username"].(string),
-		Email:    payload.Input["email"].(string),
-		Password: payload.Input["password"].(string),
-		FullName: payload.Input["full_name"].(string),
+	username, ok := payload.inputString("username")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "username is required and must be a string"})
+		return
+	}
+	email, ok := payload.inputString("email")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "email is required and must be a string"})
+		return
+	}
+	password, ok := payload.inputString("password")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "password is required and must be a string"})
+		return
+	}
+	fullName, ok := payload.inputString("full_name")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "full_name is required and must be a string"})
+		return
 	}
 
-	resp, err := h.authService.Register(c.Request.Context(), req)
+	resp, err := h.authService.Register(c.Request.Context(), auth.RegisterRequest{
+		Username: username,
+		Email:    email,
+		Password: password,
+		FullName: fullName,
+	})
 	if err != nil {
 		h.logger.Error("action register failed", slog.String("error", err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -85,11 +119,15 @@ func (h *ActionsHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	req := auth.RefreshRequest{
-		RefreshToken: payload.Input["refresh_token"].(string),
+	refreshToken, ok := payload.inputString("refresh_token")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "refresh_token is required and must be a string"})
+		return
 	}
 
-	tokens, err := h.authService.RefreshToken(c.Request.Context(), req)
+	tokens, err := h.authService.RefreshToken(c.Request.Context(), auth.RefreshRequest{
+		RefreshToken: refreshToken,
+	})
 	if err != nil {
 		h.logger.Warn("action refresh failed", slog.String("error", err.Error()))
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -107,11 +145,22 @@ func (h *ActionsHandler) SyncUser(c *gin.Context) {
 		return
 	}
 
-	req := auth.SyncUserRequest{
-		FirebaseUID: payload.Input["firebase_uid"].(string),
-		Email:       payload.Input["email"].(string),
+	firebaseUID, ok := payload.inputString("firebase_uid")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "firebase_uid is required and must be a string"})
+		return
 	}
-	if dn, ok := payload.Input["display_name"].(string); ok {
+	email, ok := payload.inputString("email")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "email is required and must be a string"})
+		return
+	}
+
+	req := auth.SyncUserRequest{
+		FirebaseUID: firebaseUID,
+		Email:       email,
+	}
+	if dn, ok := payload.inputString("display_name"); ok {
 		req.DisplayName = dn
 	}
 

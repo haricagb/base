@@ -61,8 +61,8 @@ func (c *Client) VerifyIDToken(ctx context.Context, idToken string) (*VerifiedUs
 		return nil, fmt.Errorf("verifying firebase id token: %w", err)
 	}
 
-	email, _ := token.Claims["email"].(string)
-	name, _ := token.Claims["name"].(string)
+	email, _ := token.Claims["email"].(string) //nolint:errcheck // claims may be absent; empty string is acceptable
+	name, _ := token.Claims["name"].(string)   //nolint:errcheck // claims may be absent; empty string is acceptable
 
 	return &VerifiedUser{
 		UID:         token.UID,

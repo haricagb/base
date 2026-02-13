@@ -34,15 +34,7 @@ func (s *userService) GetUser(ctx context.Context, id int64) (*domain.User, erro
 }
 
 func (s *userService) ListUsers(ctx context.Context, filter domain.UserFilter) ([]domain.User, int64, error) {
-	if filter.Limit <= 0 {
-		filter.Limit = 20
-	}
-	if filter.Limit > 100 {
-		filter.Limit = 100
-	}
-	if filter.Offset < 0 {
-		filter.Offset = 0
-	}
+	filter.Normalize()
 	return s.userRepo.List(ctx, filter)
 }
 
